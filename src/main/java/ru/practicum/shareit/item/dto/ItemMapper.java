@@ -28,14 +28,4 @@ public final class ItemMapper {
                 .build();
     }
 
-    public static Item fromCreateDto(ItemCreateDto dto, Long ownerId) {
-        if (dto == null) return null;
-        return Item.builder()
-                .name(dto.getName())
-                .description(dto.getDescription())
-                .available(dto.getAvailable())
-                .ownerId(ownerId)
-                .build();
-    }
-
 }
