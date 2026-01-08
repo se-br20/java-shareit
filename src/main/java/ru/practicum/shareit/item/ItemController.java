@@ -19,6 +19,7 @@ public class ItemController {
     @PostMapping
     public ItemDto create(@RequestHeader(USER_HEADER) Long userId,
                           @Valid @RequestBody ItemDto dto) {
+
         return service.create(userId, dto);
     }
 

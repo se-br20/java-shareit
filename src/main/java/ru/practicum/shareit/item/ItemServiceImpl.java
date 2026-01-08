@@ -82,9 +82,9 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<ItemDto> search(Long requesterId, String text) {
         requireUser(requesterId);
-        String q = text == null ? "" : text.trim();
-        if (q.isBlank()) return List.of();
-        return items.searchAvailable(q).stream().map(ItemMapper::toDto).toList();
+        return items.searchAvailable(text.trim()).stream()
+                .map(ItemMapper::toDto)
+                .toList();
     }
 
     private void requireUser(Long userId) {
