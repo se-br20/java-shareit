@@ -18,11 +18,9 @@ import java.util.regex.Pattern;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository repo;
-    private static final Pattern SIMPLE_EMAIL = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
 
     @Override
     public UserDto create(UserCreateDto dto) {
-        validateCreate(dto);
         String email = dto.getEmail().trim();
         if (repo.existsByEmail(email, null)) {
             throw new ConflictException("Email already exists");
@@ -45,10 +43,6 @@ public class UserServiceImpl implements UserService {
         if (name != null && name.isBlank()) {
             throw new ValidationException("Name must not be blank");
         }
-        if (dto.getEmail() != null && !isEmailLike(dto.getEmail())) {
-            throw new ValidationException("Email is invalid");
-        }
-
         if (dto.getEmail() != null) {
             String newEmail = dto.getEmail().trim();
             if (repo.existsByEmail(newEmail, userId)) {
@@ -83,17 +77,4 @@ public class UserServiceImpl implements UserService {
         repo.deleteById(userId);
     }
 
-    private void validateCreate(UserCreateDto dto) {
-        if (dto == null) throw new ValidationException("User body is required");
-        if (dto.getName() == null || dto.getName().isBlank()) throw new ValidationException("Name is required");
-        if (dto.getEmail() == null || dto.getEmail().isBlank()) throw new ValidationException("Email is required");
-        if (!isEmailLike(dto.getEmail())) throw new ValidationException("Email is invalid");
-    }
-
-    private boolean isEmailLike(String email) {
-        if (email == null) return false;
-        String trimmed = email.trim();
-        if (trimmed.isBlank()) return false;
-        return SIMPLE_EMAIL.matcher(trimmed).matches();
-    }
 }

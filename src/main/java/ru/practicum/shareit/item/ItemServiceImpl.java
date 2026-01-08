@@ -21,7 +21,6 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public ItemDto create(Long ownerId, ItemDto dto) {
         requireUser(ownerId);
-        validateCreate(dto);
 
         Item toSave = Item.builder()
                 .name(dto.getName().trim())
@@ -48,8 +47,12 @@ public class ItemServiceImpl implements ItemService {
         String description = (dto != null && dto.getDescription() != null) ? dto.getDescription() : existing.getDescription();
         Boolean available = (dto != null && dto.getAvailable() != null) ? dto.getAvailable() : existing.getAvailable();
 
-        if (name != null && name.isBlank()) throw new ValidationException("Item name must not be blank");
-        if (description != null && description.isBlank()) throw new ValidationException("Item description must not be blank");
+        if (name != null && name.isBlank()) {
+            throw new ValidationException("Item name must not be blank");
+        }
+        if (description != null && description.isBlank()) {
+            throw new ValidationException("Item description must not be blank");
+        }
 
         Item updated = Item.builder()
                 .id(existing.getId())
@@ -88,10 +91,4 @@ public class ItemServiceImpl implements ItemService {
         users.findById(userId).orElseThrow(() -> new NotFoundException("User not found: " + userId));
     }
 
-    private void validateCreate(ItemDto dto) {
-        if (dto == null) throw new ValidationException("Item body is required");
-        if (dto.getName() == null || dto.getName().isBlank()) throw new ValidationException("Item name is required");
-        if (dto.getDescription() == null || dto.getDescription().isBlank()) throw new ValidationException("Item description is required");
-        if (dto.getAvailable() == null) throw new ValidationException("Item available is required");
-    }
 }

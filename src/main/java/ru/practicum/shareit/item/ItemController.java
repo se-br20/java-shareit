@@ -1,9 +1,11 @@
 package ru.practicum.shareit.item;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.ItemDto;
 
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -16,7 +18,7 @@ public class ItemController {
 
     @PostMapping
     public ItemDto create(@RequestHeader(USER_HEADER) Long userId,
-                          @RequestBody ItemDto dto) {
+                          @Valid @RequestBody ItemDto dto) {
         return service.create(userId, dto);
     }
 
@@ -41,6 +43,9 @@ public class ItemController {
     @GetMapping("/search")
     public List<ItemDto> search(@RequestHeader(USER_HEADER) Long userId,
                                 @RequestParam(name = "text", required = false) String text) {
+        if (text == null || text.isBlank()) {
+            return Collections.emptyList();
+        }
         return service.search(userId, text);
     }
 }
