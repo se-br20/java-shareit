@@ -1,15 +1,20 @@
 package ru.practicum.shareit.item;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.booking.*;
+import ru.practicum.shareit.booking.dto.BookingShortDto;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
-import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.ItemMapper;
+import ru.practicum.shareit.item.dto.*;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -17,19 +22,31 @@ public class ItemServiceImpl implements ItemService {
 
     private final ItemRepository items;
     private final UserRepository users;
+    private final BookingRepository bookings;
+    private final CommentRepository comments;
 
     @Override
     public ItemDto create(Long ownerId, ItemDto dto) {
-        requireUser(ownerId);
+        User owner = requireUser(ownerId);
 
-        Item toSave = Item.builder()
+        if (dto.getName() == null || dto.getName().isBlank()) {
+            throw new ValidationException("Item name must not be blank");
+        }
+        if (dto.getDescription() == null || dto.getDescription().isBlank()) {
+            throw new ValidationException("Item description must not be blank");
+        }
+        if (dto.getAvailable() == null) {
+            throw new ValidationException("Item available is required");
+        }
+
+        Item saved = items.save(Item.builder()
                 .name(dto.getName().trim())
                 .description(dto.getDescription().trim())
                 .available(dto.getAvailable())
-                .ownerId(ownerId)
-                .build();
+                .owner(owner)
+                .build());
 
-        return ItemMapper.toDto(items.save(toSave));
+        return ItemMapper.toDto(saved);
     }
 
     @Override
@@ -39,7 +56,7 @@ public class ItemServiceImpl implements ItemService {
         Item existing = items.findById(itemId)
                 .orElseThrow(() -> new NotFoundException("Item not found: " + itemId));
 
-        if (!ownerId.equals(existing.getOwnerId())) {
+        if (!existing.getOwner().getId().equals(ownerId)) {
             throw new NotFoundException("Item not found: " + itemId);
         }
 
@@ -54,41 +71,134 @@ public class ItemServiceImpl implements ItemService {
             throw new ValidationException("Item description must not be blank");
         }
 
-        Item updated = Item.builder()
-                .id(existing.getId())
-                .name(name != null ? name.trim() : null)
-                .description(description != null ? description.trim() : null)
-                .available(available)
-                .ownerId(existing.getOwnerId())
-                .build();
+        existing.setName(name != null ? name.trim() : null);
+        existing.setDescription(description != null ? description.trim() : null);
+        existing.setAvailable(available);
 
-        return ItemMapper.toDto(items.update(updated));
+        return ItemMapper.toDto(items.save(existing));
     }
 
     @Override
-    public ItemDto getById(Long requesterId, Long itemId) {
+    public ItemResponseDto getById(Long requesterId, Long itemId) {
         requireUser(requesterId);
+
         Item item = items.findById(itemId)
                 .orElseThrow(() -> new NotFoundException("Item not found: " + itemId));
-        return ItemMapper.toDto(item);
+
+        ItemResponseDto out = ItemMapper.toResponseDto(item);
+
+        out.setComments(mapComments(comments.findByItem_Id(itemId)));
+
+        if (item.getOwner().getId().equals(requesterId)) {
+            fillLastNext(out, itemId);
+        }
+        return out;
     }
 
     @Override
-    public List<ItemDto> getOwnerItems(Long ownerId) {
+    public List<ItemResponseDto> getOwnerItems(Long ownerId) {
         requireUser(ownerId);
-        return items.findByOwnerId(ownerId).stream().map(ItemMapper::toDto).toList();
+
+        List<Item> ownerItems = items.findByOwner_Id(ownerId, Sort.by(Sort.Direction.ASC, "id"));
+        if (ownerItems.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> itemIds = ownerItems.stream().map(Item::getId).toList();
+
+        Map<Long, List<Comment>> commentsByItem = comments.findByItem_IdIn(itemIds).stream()
+                .collect(Collectors.groupingBy(c -> c.getItem().getId()));
+
+        return ownerItems.stream().map(i -> {
+            ItemResponseDto out = ItemMapper.toResponseDto(i);
+
+            List<Comment> itemComments = commentsByItem.getOrDefault(i.getId(), List.of());
+            out.setComments(mapComments(itemComments));
+
+            fillLastNext(out, i.getId());
+            return out;
+        }).toList();
     }
 
     @Override
     public List<ItemDto> search(Long requesterId, String text) {
         requireUser(requesterId);
+        if (text == null || text.isBlank()) {
+            return List.of();
+        }
         return items.searchAvailable(text.trim()).stream()
                 .map(ItemMapper::toDto)
                 .toList();
     }
 
-    private void requireUser(Long userId) {
-        users.findById(userId).orElseThrow(() -> new NotFoundException("User not found: " + userId));
+    @Override
+    public CommentDto addComment(Long userId, Long itemId, CommentCreateDto dto) {
+        User author = requireUser(userId);
+
+        Item item = items.findById(itemId)
+                .orElseThrow(() -> new NotFoundException("Item not found: " + itemId));
+
+        if (dto.getText() == null || dto.getText().isBlank()) {
+            throw new ValidationException("Comment text must not be blank");
+        }
+
+        boolean hasPastApprovedBooking = bookings.existsByItem_IdAndBooker_IdAndStatusAndEndIsBefore(
+                itemId, userId, BookingStatus.APPROVED, LocalDateTime.now()
+        );
+
+        if (!hasPastApprovedBooking) {
+            throw new ValidationException("User has not completed a booking for this item");
+        }
+
+        Comment saved = comments.save(Comment.builder()
+                .text(dto.getText().trim())
+                .item(item)
+                .author(author)
+                .created(LocalDateTime.now())
+                .build());
+
+        return toCommentDto(saved);
     }
 
+    private User requireUser(Long userId) {
+        return users.findById(userId).orElseThrow(() -> new NotFoundException("User not found: " + userId));
+    }
+
+    private void fillLastNext(ItemResponseDto out, Long itemId) {
+        LocalDateTime now = LocalDateTime.now();
+        Sort sortDesc = Sort.by(Sort.Direction.DESC, "start");
+        Sort sortAsc = Sort.by(Sort.Direction.ASC, "start");
+
+        BookingStatus approved = BookingStatus.APPROVED;
+
+        Booking last = bookings.findByItem_IdAndStatus(itemId, approved, sortDesc).stream()
+                .filter(b -> b.getEnd().isBefore(now))
+                .findFirst()
+                .orElse(null);
+
+        Booking next = bookings.findByItem_IdAndStatus(itemId, approved, sortAsc).stream()
+                .filter(b -> b.getStart().isAfter(now))
+                .findFirst()
+                .orElse(null);
+
+        if (last != null) {
+            out.setLastBooking(new BookingShortDto(last.getId(), last.getBooker().getId()));
+        }
+        if (next != null) {
+            out.setNextBooking(new BookingShortDto(next.getId(), next.getBooker().getId()));
+        }
+    }
+
+    private List<CommentDto> mapComments(List<Comment> list) {
+        return list.stream().map(this::toCommentDto).toList();
+    }
+
+    private CommentDto toCommentDto(Comment c) {
+        CommentDto dto = new CommentDto();
+        dto.setId(c.getId());
+        dto.setText(c.getText());
+        dto.setAuthorName(c.getAuthor().getName());
+        dto.setCreated(c.getCreated());
+        return dto;
+    }
 }

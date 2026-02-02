@@ -21,9 +21,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto create(UserCreateDto dto) {
         String email = dto.getEmail().trim();
-        if (repo.existsByEmail(email, null)) {
+
+        if (repo.existsByEmailIgnoreCase(email)) {
             throw new ConflictException("Email already exists");
         }
+
         User saved = repo.save(UserMapper.fromCreateDto(dto));
         return UserMapper.toDto(saved);
     }
@@ -42,21 +44,19 @@ public class UserServiceImpl implements UserService {
         if (name != null && name.isBlank()) {
             throw new ValidationException("Name must not be blank");
         }
+
         if (dto.getEmail() != null) {
             String newEmail = dto.getEmail().trim();
-            if (repo.existsByEmail(newEmail, userId)) {
+            if (repo.existsByEmailIgnoreCaseAndIdNot(newEmail, userId)) {
                 throw new ConflictException("Email already exists");
             }
             email = newEmail;
         }
 
-        User updated = User.builder()
-                .id(userId)
-                .name(name)
-                .email(email)
-                .build();
+        existing.setName(name);
+        existing.setEmail(email);
 
-        return UserMapper.toDto(repo.update(updated));
+        return UserMapper.toDto(repo.save(existing));
     }
 
     @Override
@@ -73,7 +73,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void delete(Long userId) {
+        if (!repo.existsById(userId)) {
+            throw new NotFoundException("User not found: " + userId);
+        }
         repo.deleteById(userId);
     }
-
 }
