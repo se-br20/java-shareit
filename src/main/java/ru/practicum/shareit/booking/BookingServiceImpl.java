@@ -8,6 +8,7 @@ import ru.practicum.shareit.booking.dto.BookerDto;
 import ru.practicum.shareit.booking.dto.BookingCreateDto;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.ItemShortDto;
+import ru.practicum.shareit.exception.ForbiddenException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.ItemRepository;
@@ -61,13 +62,11 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingDto approve(Long ownerId, Long bookingId, boolean approved) {
-        users.findById(ownerId).orElseThrow(() -> new NotFoundException("User not found: " + ownerId));
-
-        Booking booking = bookings.findById(bookingId)
+        Booking booking = bookings.findFullById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Booking not found: " + bookingId));
 
         if (!booking.getItem().getOwner().getId().equals(ownerId)) {
-            throw new NotFoundException("Booking not found: " + bookingId);
+            throw new ForbiddenException("Access denied");
         }
 
         if (booking.getStatus() != BookingStatus.WAITING) {
@@ -75,7 +74,9 @@ public class BookingServiceImpl implements BookingService {
         }
 
         booking.setStatus(approved ? BookingStatus.APPROVED : BookingStatus.REJECTED);
-        return toDto(bookings.save(booking));
+        Booking saved = bookings.save(booking);
+
+        return toDto(saved);
     }
 
     @Override
