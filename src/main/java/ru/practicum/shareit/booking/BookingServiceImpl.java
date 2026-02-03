@@ -4,10 +4,7 @@ package ru.practicum.shareit.booking;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.booking.dto.BookerDto;
-import ru.practicum.shareit.booking.dto.BookingCreateDto;
-import ru.practicum.shareit.booking.dto.BookingDto;
-import ru.practicum.shareit.booking.dto.ItemShortDto;
+import ru.practicum.shareit.booking.dto.*;
 import ru.practicum.shareit.exception.ForbiddenException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
@@ -57,7 +54,7 @@ public class BookingServiceImpl implements BookingService {
                 .status(BookingStatus.WAITING)
                 .build());
 
-        return toDto(saved);
+        return BookingMapper.toDto(saved);
     }
 
     @Override
@@ -76,7 +73,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(approved ? BookingStatus.APPROVED : BookingStatus.REJECTED);
         Booking saved = bookings.save(booking);
 
-        return toDto(saved);
+        return BookingMapper.toDto(saved);
     }
 
     @Override
@@ -93,7 +90,7 @@ public class BookingServiceImpl implements BookingService {
             throw new NotFoundException("Booking not found: " + bookingId);
         }
 
-        return toDto(b);
+        return BookingMapper.toDto(b);
     }
 
     @Override
@@ -112,7 +109,7 @@ public class BookingServiceImpl implements BookingService {
             case REJECTED -> bookings.findByBooker_IdAndStatus(userId, BookingStatus.REJECTED, SORT_NEW_TO_OLD);
         };
 
-        return list.stream().map(this::toDto).toList();
+        return list.stream().map(BookingMapper::toDto).toList();
     }
 
     @Override
@@ -131,18 +128,6 @@ public class BookingServiceImpl implements BookingService {
             case REJECTED -> bookings.findByItem_Owner_IdAndStatus(ownerId, BookingStatus.REJECTED, SORT_NEW_TO_OLD);
         };
 
-        return list.stream().map(this::toDto).toList();
-    }
-
-    private BookingDto toDto(Booking b) {
-        BookingDto dto = new BookingDto();
-        dto.setId(b.getId());
-        dto.setStart(b.getStart());
-        dto.setEnd(b.getEnd());
-        dto.setStatus(b.getStatus());
-
-        dto.setBooker(new BookerDto(b.getBooker().getId()));
-        dto.setItem(new ItemShortDto(b.getItem().getId(), b.getItem().getName()));
-        return dto;
+        return list.stream().map(BookingMapper::toDto).toList();
     }
 }
