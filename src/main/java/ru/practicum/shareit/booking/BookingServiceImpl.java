@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking;
 
 
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookings;
@@ -77,6 +79,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public BookingDto getById(Long userId, Long bookingId) {
         users.findById(userId).orElseThrow(() -> new NotFoundException("User not found: " + userId));
 
@@ -94,6 +97,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BookingDto> getByBooker(Long userId, BookingState state) {
         users.findById(userId).orElseThrow(() -> new NotFoundException("User not found: " + userId));
         LocalDateTime now = LocalDateTime.now();
@@ -113,6 +117,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BookingDto> getByOwner(Long ownerId, BookingState state) {
         users.findById(ownerId).orElseThrow(() -> new NotFoundException("User not found: " + ownerId));
         LocalDateTime now = LocalDateTime.now();

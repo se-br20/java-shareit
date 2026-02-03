@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.BookingStatus;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ItemServiceImpl implements ItemService {
 
     private static final Sort SORT_BY_ID_ASC = Sort.by(Sort.Direction.ASC, "id");
@@ -87,6 +89,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ItemResponseDto getById(Long requesterId, Long itemId) {
         requireUser(requesterId);
 
@@ -104,6 +107,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ItemResponseDto> getOwnerItems(Long ownerId) {
         requireUser(ownerId);
 
@@ -117,7 +121,6 @@ public class ItemServiceImpl implements ItemService {
         Map<Long, List<Comment>> commentsByItem = comments.findByItem_IdIn(itemIds).stream()
                 .collect(Collectors.groupingBy(c -> c.getItem().getId()));
 
-        // Bulk загрузка всех APPROVED по всем itemIds (N+1 устранён)
         List<Booking> approvedBookings = bookings.findApprovedForItems(itemIds, BookingStatus.APPROVED);
 
         Map<Long, List<Booking>> bookingsByItem = approvedBookings.stream()
