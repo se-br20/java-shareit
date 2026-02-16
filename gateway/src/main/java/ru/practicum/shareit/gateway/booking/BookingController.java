@@ -27,7 +27,7 @@ public class BookingController {
     @PatchMapping("/{bookingId}")
     public ResponseEntity<Object> approve(@RequestHeader(USER_HEADER) @Positive Long userId,
                                           @PathVariable @Positive Long bookingId,
-                                          @RequestParam @NotNull boolean approved) {
+                                          @RequestParam boolean approved) {
         return client.approve(userId, bookingId, approved);
     }
 

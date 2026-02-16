@@ -8,6 +8,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.gateway.item.dto.CommentCreateDto;
 import ru.practicum.shareit.gateway.item.dto.ItemDto;
+import ru.practicum.shareit.gateway.item.dto.ItemUpdateDto;
 
 @RestController
 @RequestMapping("/items")
@@ -27,8 +28,7 @@ public class ItemController {
     @PatchMapping("/{itemId}")
     public ResponseEntity<Object> update(@RequestHeader(USER_HEADER) @Positive Long userId,
                                          @PathVariable @Positive Long itemId,
-                                         @RequestBody ItemDto dto) {
-        // PATCH допускает частичное тело — поэтому @Valid НЕ ставим.
+                                         @Valid @RequestBody ItemUpdateDto dto) {
         return client.update(userId, itemId, dto);
     }
 

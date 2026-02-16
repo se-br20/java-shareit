@@ -1,6 +1,5 @@
 package ru.practicum.shareit.booking;
 
-
 import ru.practicum.shareit.exception.ValidationException;
 
 public final class BookingStateParser {
