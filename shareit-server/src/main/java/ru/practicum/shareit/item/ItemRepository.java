@@ -17,12 +17,12 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     List<Item> findByRequestIdIn(Collection<Long> requestIds);
 
     @Query("""
-        select i from Item i
-        where i.available = true
-          and (
-            upper(i.name) like upper(concat('%', ?1, '%'))
-            or upper(i.description) like upper(concat('%', ?1, '%'))
-          )
-        """)
+            select i from Item i
+            where i.available = true
+              and (
+                upper(i.name) like upper(concat('%', ?1, '%'))
+                or upper(i.description) like upper(concat('%', ?1, '%'))
+              )
+            """)
     List<Item> searchAvailable(String text);
 }

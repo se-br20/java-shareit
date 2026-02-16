@@ -225,5 +225,4 @@ public class ItemServiceImpl implements ItemService {
                 .ifPresent(next -> out.setNextBooking(new BookingShortDto(next.getId(), next.getBooker().getId())));
     }
 
-
 }

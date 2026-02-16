@@ -1,12 +1,12 @@
 package ru.practicum.shareit.booking;
 
-
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.booking.dto.*;
-import ru.practicum.shareit.exception.ForbiddenException;
+import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.booking.dto.BookingCreateDto;
+import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.booking.dto.BookingMapper;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.ItemRepository;
@@ -126,7 +126,8 @@ public class BookingServiceImpl implements BookingService {
 
         List<Booking> list = switch (effective) {
             case ALL -> bookings.findByItem_Owner_Id(ownerId, SORT_NEW_TO_OLD);
-            case CURRENT -> bookings.findByItem_Owner_IdAndStartIsBeforeAndEndIsAfter(ownerId, now, now, SORT_NEW_TO_OLD);
+            case CURRENT ->
+                    bookings.findByItem_Owner_IdAndStartIsBeforeAndEndIsAfter(ownerId, now, now, SORT_NEW_TO_OLD);
             case PAST -> bookings.findByItem_Owner_IdAndEndIsBefore(ownerId, now, SORT_NEW_TO_OLD);
             case FUTURE -> bookings.findByItem_Owner_IdAndStartIsAfter(ownerId, now, SORT_NEW_TO_OLD);
             case WAITING -> bookings.findByItem_Owner_IdAndStatus(ownerId, BookingStatus.WAITING, SORT_NEW_TO_OLD);

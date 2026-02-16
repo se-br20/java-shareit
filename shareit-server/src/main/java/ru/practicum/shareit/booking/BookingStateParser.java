@@ -4,7 +4,8 @@ package ru.practicum.shareit.booking;
 import ru.practicum.shareit.exception.ValidationException;
 
 public final class BookingStateParser {
-    private BookingStateParser() { }
+    private BookingStateParser() {
+    }
 
     public static BookingState parse(String value) {
         if (value == null) return BookingState.ALL;
