@@ -65,6 +65,7 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new NotFoundException("Booking not found: " + bookingId));
 
         if (!booking.getItem().getOwner().getId().equals(ownerId)) {
+
             throw new NotFoundException("Booking not found: " + bookingId);
         }
 
@@ -73,9 +74,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         booking.setStatus(approved ? BookingStatus.APPROVED : BookingStatus.REJECTED);
-        Booking saved = bookings.save(booking);
-
-        return BookingMapper.toDto(saved);
+        return BookingMapper.toDto(bookings.save(booking));
     }
 
     @Override
