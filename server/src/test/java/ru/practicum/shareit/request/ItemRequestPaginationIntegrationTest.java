@@ -8,6 +8,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.UUID;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -23,10 +25,11 @@ class ItemRequestPaginationIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        String email = "u-" + UUID.randomUUID() + "@u.ru";
 
         mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"u\",\"email\":\"u@u.ru\"}"))
+                        .content("{\"name\":\"u\",\"email\":\"" + email + "\"}"))
                 .andExpect(status().isOk());
     }
 
