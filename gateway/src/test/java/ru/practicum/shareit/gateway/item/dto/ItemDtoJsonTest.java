@@ -15,15 +15,13 @@ class ItemDtoJsonTest {
 
     @Test
     void deserialize_shouldReadFields() throws Exception {
-        String body = """
-                {
-                  "id": 10,
-                  "requestId": 5,
-                  "name": "Drill",
-                  "description": "Good drill",
-                  "available": true
-                }
-                """;
+        String body = "{"
+                + "\"id\":10,"
+                + "\"requestId\":5,"
+                + "\"name\":\"Drill\","
+                + "\"description\":\"Good drill\","
+                + "\"available\":true"
+                + "}";
 
         ItemDto dto = json.parse(body).getObject();
 
