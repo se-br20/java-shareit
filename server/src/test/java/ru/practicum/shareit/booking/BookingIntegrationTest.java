@@ -28,14 +28,18 @@ class BookingIntegrationTest {
         mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name":"owner","email":"o@o.ru"}
+                                {
+                                                                "name":"owner","email":"o@o.ru"
+                                                                }
                                 """))
                 .andExpect(status().isOk());
 
         mvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name":"booker","email":"b@b.ru"}
+                                {
+                                                                "name":"booker","email":"b@b.ru"
+                                                                }
                                 """))
                 .andExpect(status().isOk());
 
@@ -43,7 +47,9 @@ class BookingIntegrationTest {
                         .header("X-Sharer-User-Id", "1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name":"item","description":"d","available":true}
+                                {
+                                                                "name":"item","description":"d","available":true
+                                                                                                }
                                 """))
                 .andExpect(status().isOk());
 
