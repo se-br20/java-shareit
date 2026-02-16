@@ -8,12 +8,12 @@ public final class BookingStateParser {
     }
 
     public static BookingState parse(String value) {
-        if (value == null) return BookingState.ALL;
-        try
-        {
-            return BookingState.valueOf(value);
+        if (value == null) {
+            return BookingState.ALL;
         }
-        catch (IllegalArgumentException ex) {
+        try {
+            return BookingState.valueOf(value);
+        } catch (IllegalArgumentException ex) {
             throw new ValidationException("Unknown state: " + value);
         }
     }
