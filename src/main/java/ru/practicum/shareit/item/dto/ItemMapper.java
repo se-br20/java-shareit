@@ -17,15 +17,13 @@ public final class ItemMapper {
         return dto;
     }
 
-    public static Item fromDto(ItemDto dto, Long ownerId) {
-        if (dto == null) return null;
-        return Item.builder()
-                .id(dto.getId())
-                .name(dto.getName())
-                .description(dto.getDescription())
-                .available(dto.getAvailable())
-                .ownerId(ownerId)
-                .build();
+    public static ItemResponseDto toResponseDto(Item item) {
+        if (item == null) return null;
+        ItemResponseDto dto = new ItemResponseDto();
+        dto.setId(item.getId());
+        dto.setName(item.getName());
+        dto.setDescription(item.getDescription());
+        dto.setAvailable(item.getAvailable());
+        return dto;
     }
-
 }
