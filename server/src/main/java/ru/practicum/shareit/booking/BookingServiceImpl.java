@@ -13,6 +13,7 @@ import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
+import ru.practicum.shareit.exception.ForbiddenException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -65,8 +66,7 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new NotFoundException("Booking not found: " + bookingId));
 
         if (!booking.getItem().getOwner().getId().equals(ownerId)) {
-
-            throw new NotFoundException("Booking not found: " + bookingId);
+            throw new ForbiddenException("Access denied");
         }
 
         if (booking.getStatus() != BookingStatus.WAITING) {
