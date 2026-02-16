@@ -10,38 +10,65 @@ import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.dto.CommentCreateDto;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ItemServiceImplTest {
 
-    @Mock ItemRepository items;
-    @Mock UserRepository users;
-    @Mock BookingRepository bookings;
-    @Mock CommentRepository comments;
-    @Mock ru.practicum.shareit.request.ItemRequestRepository requests;
+    @Mock
+    private ItemRepository items;
 
-    @InjectMocks ItemServiceImpl service;
+    @Mock
+    private UserRepository users;
+
+    @Mock
+    private BookingRepository bookings;
+
+    @Mock
+    private CommentRepository comments;
+
+    @InjectMocks
+    private ItemServiceImpl service;
 
     @Test
     void addComment_withoutPastApprovedBooking_shouldThrowValidation() {
-        when(users.findById(1L)).thenReturn(Optional.of(ru.practicum.shareit.user.User.builder().id(1L).name("u").build()));
-        when(items.findById(10L)).thenReturn(Optional.of(Item.builder().id(10L).build()));
+        long userId = 1L;
+        long itemId = 10L;
+
+        User user = new User();
+        user.setId(userId);
+        user.setName("u");
+        user.setEmail("u@u.ru");
+
+        Item item = new Item();
+        item.setId(itemId);
+        item.setName("item");
+        item.setDescription("d");
+        item.setAvailable(true);
+
+        when(users.findById(userId)).thenReturn(Optional.of(user));
+        when(items.findById(itemId)).thenReturn(Optional.of(item));
 
         when(bookings.existsByItem_IdAndBooker_IdAndStatusAndEndIsBefore(
-                10L, 1L, BookingStatus.APPROVED, LocalDateTime.now()
+                eq(itemId),
+                eq(userId),
+                eq(BookingStatus.APPROVED),
+                any(LocalDateTime.class)
         )).thenReturn(false);
 
         CommentCreateDto dto = new CommentCreateDto();
-        dto.setText("ok");
+        dto.setText("hi");
 
-        assertThatThrownBy(() -> service.addComment(1L, 10L, dto))
+        assertThatThrownBy(() -> service.addComment(userId, itemId, dto))
                 .isInstanceOf(ValidationException.class);
     }
 }

@@ -1,5 +1,6 @@
 package ru.practicum.shareit.booking;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -20,6 +21,9 @@ class BookingIntegrationTest {
     @Autowired
     private MockMvc mvc;
 
+    @Autowired
+    private ObjectMapper mapper;
+
     @Test
     void approve_byWrongUser_shouldReturn403() throws Exception {
         mvc.perform(post("/users")
@@ -38,9 +42,8 @@ class BookingIntegrationTest {
                         .content("{\"name\":\"item\",\"description\":\"d\",\"available\":true}"))
                 .andExpect(status().isOk());
 
-        String start = LocalDateTime.now().plusDays(1).toString();
-        String end = LocalDateTime.now().plusDays(2).toString();
-        String bookingBody = String.format("{\"itemId\":1,\"start\":\"%s\",\"end\":\"%s\"}", start, end);
+        String bookingBody = "{\"itemId\":1,\"start\":\"%s\",\"end\":\"%s\"}"
+                .formatted(LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(2));
 
         mvc.perform(post("/bookings")
                         .header("X-Sharer-User-Id", "2")
